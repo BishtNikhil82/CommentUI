@@ -35,10 +35,10 @@ export function LoginForm() {
           <Button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="group relative flex w-full justify-center rounded-md bg-red-600 py-2 px-3 text-sm font-semibold text-white hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+            className="group relative flex w-full justify-center rounded-md bg-red-600 py-3 px-4 text-base font-semibold text-white hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors"
           >
             {loading ? (
-              <LoadingSpinner size="sm" className="mr-2" />
+              <LoadingSpinner size="sm" className="mr-2 border-t-white" />
             ) : (
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path

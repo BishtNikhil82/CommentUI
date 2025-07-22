@@ -28,14 +28,14 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
-      <div className="relative flex items-center">
+      <div className="flex items-center shadow-lg rounded-full overflow-hidden">
         <div className="relative flex-1">
           <Input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
-            className="w-full pl-10 pr-4 py-3 text-lg border-2 border-gray-300 rounded-l-full focus:border-red-500 focus:ring-0"
+            className="w-full pl-10 pr-4 py-3 text-lg border-0 rounded-none focus:ring-0 focus:outline-none bg-white"
             disabled={loading}
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -43,10 +43,10 @@ export function SearchBar({
         <Button
           type="submit"
           disabled={!query.trim() || loading}
-          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-r-full border-2 border-red-600 hover:border-red-700 min-w-[100px]"
+          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-none border-0 min-w-[100px] h-[52px] flex items-center justify-center"
         >
           {loading ? (
-            <LoadingSpinner size="sm" />
+            <LoadingSpinner size="sm" className="text-white" />
           ) : (
             'Search'
           )}

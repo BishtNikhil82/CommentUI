@@ -1,7 +1,8 @@
-import { createClient } from './supabase'
+import { createClient } from './supabaseClient'
 import { User } from '@/types'
 
 export async function signInWithGoogle() {
+  console.error('Nikihl Sign in Oauth with supabase:' )
   const supabase = createClient()
   
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -13,6 +14,7 @@ export async function signInWithGoogle() {
   })
 
   if (error) {
+    console.log('Nikihl Sign-in error:', error)
     throw new Error(error.message)
   }
 

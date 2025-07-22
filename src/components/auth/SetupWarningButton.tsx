@@ -1,14 +1,22 @@
 'use client'
 
+import { signInWithGoogle } from '@/lib/auth'
+
 export function SetupWarningButton() {
-  const handleClick = () => {
-    alert('Please configure Supabase environment variables first')
+  const handleGoogleSignIn = async () => {
+     console.log('Button clicked') 
+    try {
+      await signInWithGoogle()
+      // Supabase will handle redirect, so no further action needed here
+    } catch (error: any) {
+      alert(error.message || 'Google sign-in failed')
+    }
   }
 
   return (
     <button
       className="group relative flex w-full justify-center rounded-md bg-red-600 py-3 px-4 text-base font-semibold text-white hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors"
-      onClick={handleClick}
+      onClick={handleGoogleSignIn}
     >
       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
         <path

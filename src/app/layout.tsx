@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import '@radix-ui/themes/styles.css';
+import { Theme } from '@radix-ui/themes';
 import ServiceWorkerRegister from '../components/ServiceWorkerRegister';
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,7 +26,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ServiceWorkerRegister />
-        {children}
+        <Theme appearance="dark">
+          {children}
+        </Theme>
       </body>
     </html>
   )

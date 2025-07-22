@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { ChevronDown, ChevronUp, ExternalLink, ThumbsUp, ThumbsDown, Lightbulb } from 'lucide-react'
 import { VideoData } from '@/types'
 import { formatViewCount, formatUploadDate, truncateText } from '@/lib/utils'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui_old/Button'
 
 interface VideoCardProps {
   video: VideoData
@@ -42,8 +42,8 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
   return (
     <div
       ref={cardRef}
-      className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${
-        isExpanded ? 'ring-2 ring-red-500' : ''
+      className={`bg-white/5 backdrop-blur-md rounded-xl border overflow-hidden transition-all duration-300 ${
+        isExpanded ? 'border-purple-400/50 shadow-lg shadow-purple-500/10' : 'border-white/10 hover:border-white/20 hover:shadow-lg'
       }`}
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -58,23 +58,23 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1 rounded">
+          <div className="absolute bottom-2 right-2 bg-black/75 text-white text-xs px-2 py-0.5 rounded-md backdrop-blur-sm border border-white/10">
             {video.duration}
           </div>
         </div>
         
         <div className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+          <h3 className="font-semibold text-white mb-2 line-clamp-2">
             {truncateText(video.title, 80)}
           </h3>
           
-          <div className="flex items-center text-sm text-gray-600 mb-2">
+          <div className="flex items-center text-sm text-purple-200 mb-2">
             <span className="font-medium">{video.channelName}</span>
           </div>
           
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{formatViewCount(video.viewCount)}</span>
-            <span>{formatUploadDate(video.uploadDate)}</span>
+          <div className="flex items-center justify-between text-xs text-gray-300">
+            <span className="bg-white/10 px-2 py-0.5 rounded-full">{formatViewCount(video.viewCount)}</span>
+            <span className="bg-white/10 px-2 py-0.5 rounded-full">{formatUploadDate(video.uploadDate)}</span>
           </div>
           
           {/* Expand/Collapse button */}
@@ -82,16 +82,16 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full mt-3 flex items-center justify-center text-gray-600 hover:text-gray-900"
+            className="w-full mt-3 flex items-center justify-center text-purple-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-400/30 rounded-lg transition-all duration-200"
           >
             {isExpanded ? (
               <>
-                <ChevronUp className="w-4 h-4 mr-1" />
+                <ChevronUp className="w-4 h-4 mr-1.5 text-purple-400" />
                 Show less
               </>
             ) : (
               <>
-                <ChevronDown className="w-4 h-4 mr-1" />
+                <ChevronDown className="w-4 h-4 mr-1.5 text-purple-400" />
                 Show analysis
               </>
             )}
@@ -101,18 +101,18 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="border-t border-gray-200 p-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+        <div className="border-t border-white/10 p-4 space-y-4 animate-in slide-in-from-top-2 duration-300 bg-white/5">
           {/* Pros */}
           {video.pros && video.pros.length > 0 && (
             <div>
-              <h4 className="flex items-center font-semibold text-green-700 mb-2">
+              <h4 className="flex items-center font-semibold text-green-400 mb-2">
                 <ThumbsUp className="w-4 h-4 mr-2" />
                 Pros
               </h4>
               <ul className="space-y-1">
                 {video.pros.map((pro, index) => (
-                  <li key={index} className="flex items-start text-sm text-gray-700">
-                    <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0" />
+                  <li key={index} className="flex items-start text-sm text-gray-200">
+                    <span className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0" />
                     {pro}
                   </li>
                 ))}
@@ -123,14 +123,14 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
           {/* Cons */}
           {video.cons && video.cons.length > 0 && (
             <div>
-              <h4 className="flex items-center font-semibold text-red-700 mb-2">
+              <h4 className="flex items-center font-semibold text-red-400 mb-2">
                 <ThumbsDown className="w-4 h-4 mr-2" />
                 Cons
               </h4>
               <ul className="space-y-1">
                 {video.cons.map((con, index) => (
-                  <li key={index} className="flex items-start text-sm text-gray-700">
-                    <span className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0" />
+                  <li key={index} className="flex items-start text-sm text-gray-200">
+                    <span className="w-2 h-2 bg-red-400 rounded-full mt-2 mr-2 flex-shrink-0" />
                     {con}
                   </li>
                 ))}
@@ -141,7 +141,7 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
           {/* Next topic ideas */}
           {video.nextTopicIdeas && video.nextTopicIdeas.length > 0 && (
             <div>
-              <h4 className="flex items-center font-semibold text-blue-700 mb-2">
+              <h4 className="flex items-center font-semibold text-blue-400 mb-2">
                 <Lightbulb className="w-4 h-4 mr-2" />
                 Related Topics
               </h4>
@@ -152,7 +152,7 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => onTopicClick(topic)}
-                    className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+                    className="text-xs bg-white/10 border-white/20 text-blue-300 hover:bg-white/15 hover:border-blue-400/30 transition-all duration-200"
                   >
                     {topic}
                   </Button>
@@ -162,14 +162,14 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
           )}
 
           {/* External link */}
-          <div className="pt-2 border-t border-gray-100">
+          <div className="pt-2 border-t border-white/10">
             <a
               href={`https://youtube.com/watch?v=${video.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-red-600 hover:text-red-700 font-medium"
+              className="inline-flex items-center text-sm text-red-400 hover:text-red-300 font-medium transition-colors"
             >
-              <ExternalLink className="w-4 h-4 mr-1" />
+              <ExternalLink className="w-4 h-4 mr-1.5" />
               Watch on YouTube
             </a>
           </div>

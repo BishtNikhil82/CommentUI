@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Clock, X } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 
 interface SearchHistoryProps {
   onSearch: (query: string) => void
@@ -38,17 +38,17 @@ export function SearchHistory({ onSearch }: SearchHistoryProps) {
   if (history.length === 0) return null
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-gray-700 flex items-center">
-          <Clock className="w-4 h-4 mr-1" />
+    <div className="w-full max-w-2xl mx-auto mt-4 bg-white/5 backdrop-blur-md rounded-xl p-4 border border-white/10 shadow-lg">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-white flex items-center">
+          <Clock className="w-4 h-4 mr-1.5 text-purple-400" />
           Recent searches
         </h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={clearHistory}
-          className="text-xs text-gray-500 hover:text-gray-700"
+          className="text-xs text-purple-300 hover:text-white hover:bg-white/10 rounded-full px-3 py-1"
         >
           Clear all
         </Button>
@@ -57,20 +57,20 @@ export function SearchHistory({ onSearch }: SearchHistoryProps) {
         {history.map((query, index) => (
           <div
             key={index}
-            className="flex items-center bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1 text-sm transition-colors"
+            className="flex items-center bg-white/10 hover:bg-white/15 border border-white/10 hover:border-purple-400/30 rounded-full px-3 py-1.5 text-sm transition-all duration-200"
           >
             <button
               onClick={() => {
                 onSearch(query)
                 addToHistory(query)
               }}
-              className="flex-1 text-left"
+              className="flex-1 text-left text-white"
             >
               {query}
             </button>
             <button
               onClick={() => removeFromHistory(query)}
-              className="ml-2 text-gray-400 hover:text-gray-600"
+              className="ml-2 text-purple-300 hover:text-white"
             >
               <X className="w-3 h-3" />
             </button>

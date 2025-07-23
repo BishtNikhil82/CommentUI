@@ -3,6 +3,7 @@
 import { NextRequest } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: NextRequest) {
   const supabase = createRouteHandlerClient({ cookies })
@@ -27,74 +28,64 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const query = body.query
+  const topic = body.query
 
-  if (!query || typeof query !== 'string') {
+  if (!topic || typeof topic !== 'string') {
     return new Response(JSON.stringify({ error: 'Query is required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
   const backendUrl = process.env.PYTHON_BACKEND_URL || 'http://localhost:8000'
-  const encoder = new TextEncoder()
-  console.log("Now Calling for python Server")
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-          const url = new URL(`${backendUrl}/analyze-youtube`);
-          url.searchParams.set("query", query); // e.g., query = "dhruv Rathee"
-          url.searchParams.set("maxResults", "5");
-          url.searchParams.set("order", "relevance");
-          url.searchParams.set("regionCode", "IN");
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${youtubeToken}`,
-            }
-          });
-        const reader = response.body?.getReader()
-        if (!reader) throw new Error('No response body')
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+  console.log("Now Calling for Python Server")
 
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
+  try {
+    // Step 1: Generate job ID
+    const jobId = uuidv4()
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              controller.enqueue(encoder.encode(`${line}\n\n`))
-            }
-          }
-        }
+    // Step 2: Insert job into jobs table
+    const { error: insertError } = await supabase.from('jobs').insert({
+      id: jobId,
+      topic,
+      user_id: session.user.id,
+      status: 'processing',
+    })
 
-        const doneMsg = JSON.stringify({
-          type: 'complete',
-          data: { message: 'Analysis complete' }
-        })
-        controller.enqueue(encoder.encode(`data: ${doneMsg}\n\n`))
-      } catch (err) {
-        console.error('Streaming error:', err)
-        const errMsg = JSON.stringify({
-          type: 'error',
-          data: { error: err instanceof Error ? err.message : 'Unknown error' }
-        })
-        controller.enqueue(encoder.encode(`data: ${errMsg}\n\n`))
-      } finally {
-        controller.close()
+    if (insertError) {
+      throw new Error(`Failed to insert job: ${insertError.message}`)
+    }
+
+    // Step 3: Fire-and-forget request to Python server with job ID (no await)
+    const url = new URL(`${backendUrl}/analyze-youtube`);
+    url.searchParams.set("query", topic);
+    url.searchParams.set("maxResults", "5");
+    url.searchParams.set("order", "relevance");
+    url.searchParams.set("regionCode", "IN");
+    url.searchParams.set("job_id", jobId);
+
+    fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${youtubeToken}`,
       }
-    }
-  })
+    }).catch(err => {
+      console.error('Background fetch to Python server failed:', err)
+    });
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    }
-  })
+    // Step 4: Respond with job ID only
+    return new Response(JSON.stringify({ job_id: jobId }), {
+      status: 202,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (err) {
+    console.error('Fetch error:', err)
+    return new Response(JSON.stringify({
+      error: err instanceof Error ? err.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 }

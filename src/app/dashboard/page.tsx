@@ -48,6 +48,7 @@ export default function DashboardPage() {
         credentials: 'include', // <- THIS is essential for cookies/session
         body: JSON.stringify({ query }),
       })
+      //const data = await response.json()
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -73,6 +74,7 @@ export default function DashboardPage() {
           buffer = lines.pop() || ''
 
           for (const line of lines) {
+             console.log('[Line]', line)
             if (line.startsWith('data: ')) {
               try {
                 const data: StreamingChunk = JSON.parse(line.slice(6))

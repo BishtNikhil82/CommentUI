@@ -12,7 +12,7 @@ exports.id = "app/page";
 exports.ids = ["app/page"];
 exports.modules = {
 
-/***/ "./action-async-storage.external?9022":
+/***/ "./action-async-storage.external":
 /*!****************************************************************************!*\
   !*** external "next/dist/client/components/action-async-storage.external" ***!
   \****************************************************************************/
@@ -23,7 +23,7 @@ module.exports = require("next/dist/client/components/action-async-storage.exter
 
 /***/ }),
 
-/***/ "./action-async-storage.external?8dda":
+/***/ "../../client/components/action-async-storage.external":
 /*!*******************************************************************************!*\
   !*** external "next/dist/client/components/action-async-storage.external.js" ***!
   \*******************************************************************************/
@@ -34,7 +34,7 @@ module.exports = require("next/dist/client/components/action-async-storage.exter
 
 /***/ }),
 
-/***/ "./request-async-storage.external?93d0":
+/***/ "./request-async-storage.external":
 /*!*****************************************************************************!*\
   !*** external "next/dist/client/components/request-async-storage.external" ***!
   \*****************************************************************************/
@@ -45,7 +45,7 @@ module.exports = require("next/dist/client/components/request-async-storage.exte
 
 /***/ }),
 
-/***/ "./request-async-storage.external?3d59":
+/***/ "../../client/components/request-async-storage.external":
 /*!********************************************************************************!*\
   !*** external "next/dist/client/components/request-async-storage.external.js" ***!
   \********************************************************************************/
@@ -56,7 +56,7 @@ module.exports = require("next/dist/client/components/request-async-storage.exte
 
 /***/ }),
 
-/***/ "./static-generation-async-storage.external?d822":
+/***/ "./static-generation-async-storage.external":
 /*!***************************************************************************************!*\
   !*** external "next/dist/client/components/static-generation-async-storage.external" ***!
   \***************************************************************************************/
@@ -67,7 +67,7 @@ module.exports = require("next/dist/client/components/static-generation-async-st
 
 /***/ }),
 
-/***/ "./static-generation-async-storage.external?16bc":
+/***/ "../../client/components/static-generation-async-storage.external":
 /*!******************************************************************************************!*\
   !*** external "next/dist/client/components/static-generation-async-storage.external.js" ***!
   \******************************************************************************************/
@@ -435,7 +435,7 @@ const __default__ = proxy.default;
 var __webpack_require__ = require("../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@supabase","vendor-chunks/tr46","vendor-chunks/ws","vendor-chunks/whatwg-url","vendor-chunks/set-cookie-parser","vendor-chunks/webidl-conversions","vendor-chunks/jose","vendor-chunks/isows","vendor-chunks/react-icons","vendor-chunks/@radix-ui","vendor-chunks/tailwind-merge","vendor-chunks/@floating-ui","vendor-chunks/tslib","vendor-chunks/react-remove-scroll","vendor-chunks/lucide-react","vendor-chunks/aria-hidden","vendor-chunks/react-remove-scroll-bar","vendor-chunks/use-sync-external-store","vendor-chunks/use-callback-ref","vendor-chunks/use-sidecar","vendor-chunks/react-style-singleton","vendor-chunks/@swc","vendor-chunks/radix-ui","vendor-chunks/classnames","vendor-chunks/clsx","vendor-chunks/get-nonce"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fpage&page=%2Fpage&appPaths=%2Fpage&pagePath=private-next-app-dir%2Fpage.tsx&appDir=D%3A%5C2025%5CGit%5CCommentUI%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=D%3A%5C2025%5CGit%5CCommentUI&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@swc","vendor-chunks/@radix-ui","vendor-chunks/@supabase","vendor-chunks/tr46","vendor-chunks/ws","vendor-chunks/@floating-ui","vendor-chunks/whatwg-url","vendor-chunks/tslib","vendor-chunks/react-remove-scroll","vendor-chunks/aria-hidden","vendor-chunks/set-cookie-parser","vendor-chunks/react-remove-scroll-bar","vendor-chunks/webidl-conversions","vendor-chunks/use-sync-external-store","vendor-chunks/use-callback-ref","vendor-chunks/use-sidecar","vendor-chunks/jose","vendor-chunks/react-style-singleton","vendor-chunks/radix-ui","vendor-chunks/classnames","vendor-chunks/isows","vendor-chunks/get-nonce","vendor-chunks/react-icons","vendor-chunks/tailwind-merge","vendor-chunks/lucide-react","vendor-chunks/clsx"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fpage&page=%2Fpage&appPaths=%2Fpage&pagePath=private-next-app-dir%2Fpage.tsx&appDir=D%3A%5C2025%5CGit%5CCommentUI%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=D%3A%5C2025%5CGit%5CCommentUI&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

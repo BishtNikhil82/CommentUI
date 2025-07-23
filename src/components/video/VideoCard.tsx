@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { ChevronDown, ChevronUp, ExternalLink, ThumbsUp, ThumbsDown, Lightbulb } from 'lucide-react'
 import { VideoData } from '@/types'
 import { formatViewCount, formatUploadDate, truncateText } from '@/lib/utils'
-import { Button } from '@/components/ui_old/Button'
+import { Button } from '@/components/ui/button'
 
 interface VideoCardProps {
   video: VideoData

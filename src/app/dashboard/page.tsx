@@ -45,6 +45,7 @@ export default function DashboardPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // <- THIS is essential for cookies/session
         body: JSON.stringify({ query }),
       })
 
@@ -213,7 +214,7 @@ export default function DashboardPage() {
           <div className="space-y-8 mt-12">
             <div className="bg-white/5 backdrop-blur-md rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between border border-white/10">
               <h3 className="text-xl font-semibold text-white mb-2 md:mb-0">
-                Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">"{searchState.query}"</span>
+                Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">&quot{searchState.query}&quot</span>
               </h3>
               <div className="flex items-center space-x-2 bg-white/10 rounded-full px-4 py-1.5 text-purple-200 border border-white/20">
                 <span className="flex items-center">

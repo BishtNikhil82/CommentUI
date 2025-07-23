@@ -8,8 +8,12 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      scopes: 'https://www.googleapis.com/auth/youtube.readonly',
+      scopes: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl',
       redirectTo: `${window.location.origin}/auth/callback`,
+      queryParams: {
+        prompt: 'consent',
+        access_type: 'offline', // also required for refresh_token
+      },
     },
   })
 
@@ -28,6 +32,17 @@ export async function signOut() {
   if (error) {
     throw new Error(error.message)
   }
+}
+
+export async function getProviderToken(): Promise<string | null> {
+  const supabase = createClient();
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  if (error || !session) {
+    return null;
+  }
+
+  return session.provider_token;
 }
 
 export async function getCurrentUser(): Promise<User | null> {

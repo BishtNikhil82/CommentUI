@@ -1496,9 +1496,6 @@ body {
   --tw-gradient-to: rgb(88 28 135 / 0)  var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), #581c87 var(--tw-gradient-via-position), var(--tw-gradient-to);
 }
-.to-blue-500 {
-  --tw-gradient-to: #3b82f6 var(--tw-gradient-to-position);
-}
 .to-pink-400 {
   --tw-gradient-to: #f472b6 var(--tw-gradient-to-position);
 }
@@ -2120,14 +2117,6 @@ body {
   color: rgb(233 213 255 / 0.6);
 }
 
-.placeholder\:text-purple-300\/50::-moz-placeholder {
-  color: rgb(216 180 254 / 0.5);
-}
-
-.placeholder\:text-purple-300\/50::placeholder {
-  color: rgb(216 180 254 / 0.5);
-}
-
 .after\:absolute::after {
   content: var(--tw-content);
   position: absolute;
@@ -2282,20 +2271,10 @@ body {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
-.hover\:from-purple-700:hover {
-  --tw-gradient-from: #7e22ce var(--tw-gradient-from-position);
-  --tw-gradient-to: rgb(126 34 206 / 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-
 .hover\:from-red-500:hover {
   --tw-gradient-from: #ef4444 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(239 68 68 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-
-.hover\:to-blue-600:hover {
-  --tw-gradient-to: #2563eb var(--tw-gradient-to-position);
 }
 
 .hover\:to-pink-500:hover {
@@ -2402,10 +2381,6 @@ body {
   --tw-ring-offset-width: 2px;
 }
 
-.focus-visible\:border-purple-400\/30:focus-visible {
-  border-color: rgb(192 132 252 / 0.3);
-}
-
 .focus-visible\:outline-none:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
@@ -2421,10 +2396,6 @@ body {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-.focus-visible\:ring-purple-400\/30:focus-visible {
-  --tw-ring-color: rgb(192 132 252 / 0.3);
 }
 
 .focus-visible\:ring-ring:focus-visible {

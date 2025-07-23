@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
-  // Add security headers
+  // Security headers
   res.headers.set('X-Frame-Options', 'DENY')
   res.headers.set('X-Content-Type-Options', 'nosniff')
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
@@ -14,51 +14,58 @@ export async function middleware(req: NextRequest) {
   try {
     const supabase = createMiddlewareClient({ req, res })
 
-    // Refresh session if expired
-    const { data: { session }, error } = await supabase.auth.getSession()
+    // Refresh session if needed
+    const {
+      data: { session },
+      error
+    } = await supabase.auth.getSession()
 
-    if (error) {
-      console.error('Middleware auth error:', {
-        error: error.message,
-        path: req.nextUrl.pathname,
-        timestamp: new Date().toISOString()
-      })
-      // Don't block the request, let the page handle the error
-    }
+    const pathname = req.nextUrl.pathname
+    const isPublicRoute =
+      pathname === '/' ||
+      pathname.startsWith('/public') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/favicon')
 
-    // Route patterns
-    const isAuthRoute = req.nextUrl.pathname.startsWith('/auth')
-    const isApiAuthRoute = req.nextUrl.pathname.startsWith('/api/auth')
-    const isPublicRoute = req.nextUrl.pathname === '/' ||
-      req.nextUrl.pathname.startsWith('/public') ||
-      req.nextUrl.pathname.startsWith('/_next') ||
-      req.nextUrl.pathname.startsWith('/favicon')
+    const isAuthRoute = pathname.startsWith('/auth')
+    const isApiAuthRoute = pathname.startsWith('/api/auth')
 
-    // Protected routes
+    // ✅ Your protected routes (requires YouTube token too)
     const protectedRoutes = ['/dashboard', '/api/analytics']
     const isProtectedRoute = protectedRoutes.some(route =>
-      req.nextUrl.pathname.startsWith(route)
+      pathname.startsWith(route)
     )
 
-    // Allow API auth routes and public routes
-    if (isApiAuthRoute || isPublicRoute) {
+    if (isPublicRoute || isApiAuthRoute) {
       return res
     }
 
-    // Handle protected routes
     if (isProtectedRoute) {
       if (!session) {
-        console.log('Redirecting unauthenticated user:', {
-          path: req.nextUrl.pathname,
+        console.warn('Redirecting unauthenticated user:', {
+          pathname,
           timestamp: new Date().toISOString()
         })
         const redirectUrl = new URL('/auth/login', req.url)
-        redirectUrl.searchParams.set('next', req.nextUrl.pathname)
+        redirectUrl.searchParams.set('next', pathname)
+        return NextResponse.redirect(redirectUrl)
+      }
+
+      // 🔐 ✅ YouTube Access Check (important!)
+      const hasYouTubeToken = session.provider_token?.includes('ya29')
+      if (!hasYouTubeToken) {
+        console.warn('Redirecting: Missing YouTube permission:', {
+          pathname,
+          user: session.user?.email,
+          timestamp: new Date().toISOString()
+        })
+        const redirectUrl = new URL('/auth/reauth', req.url)
+        redirectUrl.searchParams.set('next', pathname)
         return NextResponse.redirect(redirectUrl)
       }
     }
 
-    // Redirect authenticated users away from auth pages
+    // Redirect logged-in user away from /auth/* to /dashboard
     if (isAuthRoute && session) {
       const next = req.nextUrl.searchParams.get('next') || '/dashboard'
       return NextResponse.redirect(new URL(next, req.url))
@@ -71,13 +78,12 @@ export async function middleware(req: NextRequest) {
       path: req.nextUrl.pathname,
       timestamp: new Date().toISOString()
     })
-    // On error, allow the request to continue
-    return res
+    return res // fail open
   }
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

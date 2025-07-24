@@ -39,7 +39,7 @@ export function Header({ user }: HeaderProps) {
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-full py-1.5 px-3 border border-white/20">
-              {user.user_metadata?.avatar_url ? (
+              {user?.user_metadata?.avatar_url ? (
                 <Image
                   src={user.user_metadata.avatar_url}
                   alt="Profile"
@@ -53,7 +53,7 @@ export function Header({ user }: HeaderProps) {
                 </div>
               )}
               <span className="text-sm font-medium text-white hidden sm:block">
-                {user.user_metadata?.full_name || user.email}
+                {user?.user_metadata?.full_name || user?.email}
               </span>
             </div>
             

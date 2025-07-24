@@ -36,8 +36,16 @@ export async function middleware(req: NextRequest) {
       pathname.startsWith(route)
     )
 
+    console.log('middleware: testJobId', process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID, 'path:', req.nextUrl.pathname);
+
     if (isPublicRoute || isApiAuthRoute) {
       return res
+    }
+
+    const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID;
+    if (isProtectedRoute && testJobId) {
+      // Bypass YouTube token check in test mode
+      return res;
     }
 
     if (isProtectedRoute) {
@@ -51,8 +59,15 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
 
+      // Debug: Log session and provider_token
+      console.log('Session object:', JSON.stringify(session, null, 2))
+      console.log('provider_token (top-level):', session.provider_token)
+      console.log('provider_token (user_metadata):', session.user?.user_metadata?.provider_token)
+
       // 🔐 ✅ YouTube Access Check (important!)
-      const hasYouTubeToken = session.provider_token?.includes('ya29')
+      const hasYouTubeToken =
+        (session.provider_token && session.provider_token.includes('ya29')) ||
+        (session.user?.user_metadata?.provider_token && session.user.user_metadata.provider_token.includes('ya29'))
       if (!hasYouTubeToken) {
         console.warn('Redirecting: Missing YouTube permission:', {
           pathname,

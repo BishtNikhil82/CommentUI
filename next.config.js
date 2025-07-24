@@ -2,6 +2,7 @@
 const nextConfig = {
   images: {
     domains: [
+      'via.placeholder.com',
       'i.ytimg.com',
       'img.youtube.com',
       'lh3.googleusercontent.com',

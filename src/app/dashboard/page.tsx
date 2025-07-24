@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Header } from '@/components/layout/Header'
 import { SearchBar } from '@/components/search/SearchBar'
@@ -11,6 +11,9 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { VideoData, StreamingChunk } from '@/types'
 import { toast } from 'sonner'
+import { createBrowserClient } from '@supabase/ssr'
+import { Alert } from '@/components/ui/alert'
+// Removed import { createClient } from '@/lib/supabase/client' because the module does not exist
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
@@ -22,12 +25,151 @@ export default function DashboardPage() {
     totalFound: 0,
     isComplete: false,
   })
+  // Keep track of the current Supabase channel subscription
+  const subscriptionRef = useRef<any>(null)
+  const jobIdRef = useRef<string | null>(null)
+
+  // --- SUPABASE TEST MODE ---
+  const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID
+  useEffect(() => {
+    console.log('DashboardPage mounted. testJobId:', testJobId, 'user:', user);
+    if (!testJobId) return
+    // Clean up previous subscription if any
+    if (subscriptionRef.current) {
+      console.log('Unsubscribing previous channel');
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    setSearchState(prev => ({ ...prev, videos: [], totalFound: 0 }))
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    console.log('Subscribing to job_results for job_id:', testJobId)
+    const channel = supabase
+      .channel('job_results_' + testJobId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'job_results',
+          filter: `job_id=eq.${testJobId}`,
+        },
+        (payload: any) => {
+          console.log('Received job_results insert:', payload.new)
+          const row = payload.new
+          setSearchState(prev => {
+            if (prev.videos.some(v => v.id === row.video_id)) return prev
+            return {
+              ...prev,
+              videos: [...prev.videos, mapJobResultToVideoData(row)],
+              totalFound: prev.totalFound + 1,
+            }
+          })
+        }
+      )
+      .subscribe()
+    subscriptionRef.current = channel
+    return () => {
+      if (subscriptionRef.current) {
+        console.log('Unsubscribing on cleanup')
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
+    }
+  }, [testJobId, user])
+  // --- END SUPABASE TEST MODE ---
+
+  // Helper to map job_results row to VideoData
+  function mapJobResultToVideoData(row: any): VideoData {
+    return {
+      id: row.video_id,
+      title: row.video_title,
+      channelName: row.channel_title,
+      thumbnail: row.thumbnail_url,
+      viewCount: '', // Not available in job_results
+      uploadDate: '', // Not available in job_results
+      duration: '', // Not available in job_results
+      description: '', // Not available in job_results
+      pros: row.pros ? (Array.isArray(row.pros) ? row.pros : (typeof row.pros === 'string' ? JSON.parse(row.pros) : [])) : [],
+      cons: row.cons ? (Array.isArray(row.cons) ? row.cons : (typeof row.cons === 'string' ? JSON.parse(row.cons) : [])) : [],
+      nextTopicIdeas: [], // Not available in job_results
+    }
+  }
+
+  // Clean up subscription on unmount or new search
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
+    }
+  }, [])
 
   const handleSearch = useCallback(async (query: string) => {
+    const isMock = process.env.NEXT_PUBLIC_MOCK_UI === 'true'
+    if (isMock) {
+      setSearchState(prev => ({
+        ...prev,
+        query,
+        loading: true,
+        videos: [],
+        error: null,
+        totalFound: 0,
+        isComplete: false,
+      }))
+      setTimeout(() => {
+        setSearchState(prev => ({
+          ...prev,
+          videos: [
+            {
+              id: '1',
+              title: 'Mock Video',
+              channelName: 'Mock Channel',
+              thumbnail: 'https://via.placeholder.com/320x180',
+              viewCount: '1000',
+              uploadDate: '2024-01-01',
+              duration: '10:00',
+              description: 'This is a mock video.',
+              pros: ['Good', 'Informative'],
+              cons: ['Long'],
+              nextTopicIdeas: ['Next Topic'],
+            },
+            {
+              id: '2',
+              title: 'Another Mock Video',
+              channelName: 'Demo Channel',
+              thumbnail: 'https://via.placeholder.com/320x180?text=Demo',
+              viewCount: '500',
+              uploadDate: '2024-02-01',
+              duration: '5:00',
+              description: 'Second mock video.',
+              pros: ['Short'],
+              cons: ['Not detailed'],
+              nextTopicIdeas: ['Demo Topic'],
+            },
+          ],
+          totalFound: 2,
+          loading: false,
+          isComplete: true,
+        }))
+      }, 1000)
+      return
+    }
+
     if (!user) {
       toast.error('Please sign in to search')
       return
     }
+
+    // Clean up previous subscription if any
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    jobIdRef.current = null
 
     setSearchState(prev => ({
       ...prev,
@@ -45,94 +187,75 @@ export default function DashboardPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // <- THIS is essential for cookies/session
+        credentials: 'include',
         body: JSON.stringify({ query }),
       })
-      //const data = await response.json()
 
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to fetch analytics')
       }
 
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No response body')
-      }
+      const { job_id } = await response.json()
+      if (!job_id) throw new Error('No job_id returned from API')
+      jobIdRef.current = job_id
 
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read()
-          
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-
-          for (const line of lines) {
-             console.log('[Line]', line)
-            if (line.startsWith('data: ')) {
-              try {
-                const data: StreamingChunk = JSON.parse(line.slice(6))
-                
-                switch (data.type) {
-                  case 'video':
-                    const videoData = data.data as VideoData
-                    setSearchState(prev => ({
-                      ...prev,
-                      videos: [...prev.videos, videoData],
-                      totalFound: prev.totalFound + 1,
-                    }))
-                    break
-                    
-                  case 'progress':
-                    const progressData = data.data as { message: string; count?: number }
-                    if (progressData.count !== undefined) {
-                      setSearchState(prev => ({
-                        ...prev,
-                        totalFound: progressData.count!,
-                      }))
-                    }
-                    break
-                    
-                  case 'complete':
-                    setSearchState(prev => ({
-                      ...prev,
-                      loading: false,
-                      isComplete: true,
-                    }))
-                    break
-                    
-                  case 'error':
-                    const errorData = data.data as { error: string }
-                    throw new Error(errorData.error)
-                }
-              } catch (parseError) {
-                console.error('Error parsing SSE data:', parseError)
+      // Subscribe to job_results for this job_id
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const channel = supabase
+        .channel('job_results_' + job_id)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'job_results',
+            filter: `job_id=eq.${job_id}`,
+          },
+          (payload: any) => {
+            const row = payload.new
+            setSearchState(prev => {
+              // Avoid duplicates
+              if (prev.videos.some(v => v.id === row.video_id)) return prev
+              return {
+                ...prev,
+                videos: [...prev.videos, mapJobResultToVideoData(row)],
+                totalFound: prev.totalFound + 1,
               }
-            }
+            })
           }
-        }
-      } finally {
-        reader.releaseLock()
-      }
+        )
+        .subscribe((status: any) => {
+          if (status === 'SUBSCRIBED') {
+            // Optionally, you could fetch any already-inserted rows here
+          }
+        })
+      subscriptionRef.current = channel
+
+      // Optionally, poll for job completion (or listen to jobs table for status)
+      // For now, mark as complete after some time or when enough results
+      // You can enhance this with another subscription if needed
     } catch (error) {
       console.error('Search error:', error)
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
-      
       setSearchState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage,
       }))
-      
       toast.error(errorMessage)
     }
   }, [user])
+
+  // Optionally, mark loading false when results arrive (or after a timeout)
+  useEffect(() => {
+    if (searchState.loading && searchState.videos.length > 0) {
+      setSearchState(prev => ({ ...prev, loading: false, isComplete: true }))
+    }
+  }, [searchState.loading, searchState.videos.length])
 
   const handleTopicClick = useCallback((topic: string) => {
     handleSearch(topic)
@@ -146,12 +269,19 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user) {
+  if (!user && !testJobId) {
     return <LoginForm />
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-800">
+      {testJobId && (
+        <div className="max-w-2xl mx-auto mt-4">
+          <Alert>
+            <b>Supabase Test Mode:</b> Subscribed to job_id <code>{testJobId}</code>. Insert rows in Supabase to see realtime UI updates.
+          </Alert>
+        </div>
+      )}
       <Header user={user} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

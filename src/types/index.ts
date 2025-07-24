@@ -14,10 +14,6 @@ export interface VideoData {
   title: string;
   channelName: string;
   thumbnail: string;
-  viewCount: string;
-  uploadDate: string;
-  duration: string;
-  description?: string;
   pros?: string[];
   cons?: string[];
   nextTopicIdeas?: string[];

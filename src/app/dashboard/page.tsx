@@ -82,21 +82,37 @@ export default function DashboardPage() {
   // --- END SUPABASE TEST MODE ---
 
   // Helper to map job_results row to VideoData
-  function mapJobResultToVideoData(row: any): VideoData {
-    return {
-      id: row.video_id,
-      title: row.video_title,
-      channelName: row.channel_title,
-      thumbnail: row.thumbnail_url,
-      viewCount: '', // Not available in job_results
-      uploadDate: '', // Not available in job_results
-      duration: '', // Not available in job_results
-      description: '', // Not available in job_results
-      pros: row.pros ? (Array.isArray(row.pros) ? row.pros : (typeof row.pros === 'string' ? JSON.parse(row.pros) : [])) : [],
-      cons: row.cons ? (Array.isArray(row.cons) ? row.cons : (typeof row.cons === 'string' ? JSON.parse(row.cons) : [])) : [],
-      nextTopicIdeas: [], // Not available in job_results
+function mapJobResultToVideoData(row: any): VideoData {
+  const normalizeToArray = (value: any): string[] => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      return value.trim().startsWith('[')
+        ? safeParseArray(value) // try parsing as JSON array
+        : [value]; // just a plain string
     }
-  }
+    return [];
+  };
+
+  const safeParseArray = (value: string): string[] => {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [value];
+    } catch {
+      return [value]; // fallback: wrap raw string
+    }
+  };
+
+  return {
+    id: row.video_id,
+    title: row.video_title,
+    channelName: row.channel_title,
+    thumbnail: row.thumbnail_url,
+    pros: normalizeToArray(row.pros),
+    cons: normalizeToArray(row.cons),
+    nextTopicIdeas: [],
+  };
+}
+
 
   // Clean up subscription on unmount or new search
   useEffect(() => {

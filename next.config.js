@@ -7,6 +7,7 @@ const nextConfig = {
       'img.youtube.com',
       'lh3.googleusercontent.com',
       'yt3.ggpht.com',
+      'example.com', 
     ],
   },
   experimental: {

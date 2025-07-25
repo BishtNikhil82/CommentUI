@@ -17,6 +17,9 @@ export interface VideoData {
   pros?: string[];
   cons?: string[];
   nextTopicIdeas?: string[];
+  duration?: string;
+  viewCount?: string;
+  uploadDate?: string;
 }
 
 export interface AnalyticsResponse {

@@ -12,15 +12,19 @@ interface SearchBarProps {
   placeholder?: string
 }
 
+console.log('SEARCHBAR: file loaded');
+
 export function SearchBar({ 
   onSearch, 
   loading = false, 
   placeholder = "Search for YouTube topic analysis..." 
 }: SearchBarProps) {
   const [query, setQuery] = useState('')
+  console.log('SEARCHBAR: render', { query, loading });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
+    console.log('SEARCHBAR: handleSubmit', { query, loading });
     if (query.trim() && !loading) {
       onSearch(query.trim())
     }
@@ -33,7 +37,10 @@ export function SearchBar({
           <Input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              console.log('SEARCHBAR: onChange', e.target.value);
+            }}
             placeholder={placeholder}
             className="w-full pl-10 pr-4 py-3 text-lg border-0 rounded-none focus:ring-0 focus:outline-none bg-transparent text-white placeholder:text-purple-200/60"
             disabled={loading}

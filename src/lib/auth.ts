@@ -1,9 +1,9 @@
-import { createClient } from './supabaseClient'
+import { supabase } from '@/lib/client'
+//import { createSupabaseServerClient } from '@/lib/server'
 import { User } from '@/types'
 
 export async function signInWithGoogle() {
   console.error('Nikihl Sign in Oauth with supabase:' )
-  const supabase = createClient()
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -26,7 +26,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signOut() {
-  const supabase = createClient()
+  console.log('signOut called from src/lib/auth.ts')
   const { error } = await supabase.auth.signOut()
   
   if (error) {
@@ -35,7 +35,6 @@ export async function signOut() {
 }
 
 export async function getProviderToken(): Promise<string | null> {
-  const supabase = createClient();
   const { data: { session }, error } = await supabase.auth.getSession();
 
   if (error || !session) {
@@ -46,7 +45,6 @@ export async function getProviderToken(): Promise<string | null> {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const supabase = createClient()
   const { data: { user }, error } = await supabase.auth.getUser()
   
   if (error || !user) {

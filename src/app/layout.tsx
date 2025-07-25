@@ -17,11 +17,10 @@ export const metadata: Metadata = {
 
 export const viewport = 'width=device-width, initial-scale=1';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+console.log('LAYOUT: file loaded');
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  console.log('LAYOUT: RootLayout render');
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -31,5 +30,5 @@ export default function RootLayout({
         </Theme>
       </body>
     </html>
-  )
+  );
 }

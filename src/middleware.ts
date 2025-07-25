@@ -1,104 +1,91 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+console.log('🔐 MIDDLEWARE: loaded');
 
-  // Security headers
-  res.headers.set('X-Frame-Options', 'DENY')
-  res.headers.set('X-Content-Type-Options', 'nosniff')
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  res.headers.set('X-XSS-Protection', '1; mode=block')
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
 
-  try {
-    const supabase = createMiddlewareClient({ req, res })
+  // Add security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
 
-    // Refresh session if needed
-    const {
-      data: { session },
-      error
-    } = await supabase.auth.getSession()
-
-    const pathname = req.nextUrl.pathname
-    const isPublicRoute =
-      pathname === '/' ||
-      pathname.startsWith('/public') ||
-      pathname.startsWith('/_next') ||
-      pathname.startsWith('/favicon')
-
-    const isAuthRoute = pathname.startsWith('/auth')
-    const isApiAuthRoute = pathname.startsWith('/api/auth')
-
-    // ✅ Your protected routes (requires YouTube token too)
-    const protectedRoutes = ['/dashboard', '/api/analytics']
-    const isProtectedRoute = protectedRoutes.some(route =>
-      pathname.startsWith(route)
-    )
-
-    console.log('middleware: testJobId', process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID, 'path:', req.nextUrl.pathname);
-
-    if (isPublicRoute || isApiAuthRoute) {
-      return res
-    }
-
-    const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID;
-    if (isProtectedRoute && testJobId) {
-      // Bypass YouTube token check in test mode
-      return res;
-    }
-
-    if (isProtectedRoute) {
-      if (!session) {
-        console.warn('Redirecting unauthenticated user:', {
-          pathname,
-          timestamp: new Date().toISOString()
-        })
-        const redirectUrl = new URL('/auth/login', req.url)
-        redirectUrl.searchParams.set('next', pathname)
-        return NextResponse.redirect(redirectUrl)
-      }
-
-      // Debug: Log session and provider_token
-      console.log('Session object:', JSON.stringify(session, null, 2))
-      console.log('provider_token (top-level):', session.provider_token)
-      console.log('provider_token (user_metadata):', session.user?.user_metadata?.provider_token)
-
-      // 🔐 ✅ YouTube Access Check (important!)
-      const hasYouTubeToken =
-        (session.provider_token && session.provider_token.includes('ya29')) ||
-        (session.user?.user_metadata?.provider_token && session.user.user_metadata.provider_token.includes('ya29'))
-      if (!hasYouTubeToken) {
-        console.warn('Redirecting: Missing YouTube permission:', {
-          pathname,
-          user: session.user?.email,
-          timestamp: new Date().toISOString()
-        })
-        const redirectUrl = new URL('/auth/reauth', req.url)
-        redirectUrl.searchParams.set('next', pathname)
-        return NextResponse.redirect(redirectUrl)
+  // Create Supabase client
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookies) => {
+          cookies.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
+        }
       }
     }
+  );
 
-    // Redirect logged-in user away from /auth/* to /dashboard
-    if (isAuthRoute && session) {
-      const next = req.nextUrl.searchParams.get('next') || '/dashboard'
-      return NextResponse.redirect(new URL(next, req.url))
-    }
+  // DO NOT REMOVE — this sets up the auth state
+  const { data: { session }, error } = await supabase.auth.getSession();
 
-    return res
-  } catch (error) {
-    console.error('Middleware error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      path: req.nextUrl.pathname,
-      timestamp: new Date().toISOString()
-    })
-    return res // fail open
+  const pathname = request.nextUrl.pathname;
+
+  const isAuthRoute = pathname.startsWith('/auth');
+  const isApiAuthRoute = pathname.startsWith('/api/auth');
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname.startsWith('/public') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon');
+
+  const protectedRoutes = ['/dashboard', '/api/analytics'];
+  const isProtectedRoute = protectedRoutes.some(route =>
+    pathname.startsWith(route)
+  );
+
+  // Allow public and API auth routes
+  if (isPublicRoute || isApiAuthRoute) {
+    return response;
   }
+
+  // Redirect if protected route and user is not signed in
+  if (isProtectedRoute && !session) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/auth/login';
+    redirectUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // Redirect logged-in users away from /auth routes
+  if (isAuthRoute && session) {
+    const next = request.nextUrl.searchParams.get('next') || '/dashboard';
+    return NextResponse.redirect(new URL(next, request.url));
+  }
+
+  // Optional: Check for YouTube token if required
+  if (isProtectedRoute && session) {
+    const hasYouTubeToken =
+      (session.provider_token && session.provider_token.includes('ya29')) ||
+      (session.user?.user_metadata?.provider_token?.includes('ya29'));
+
+    if (!hasYouTubeToken) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/auth/reauth';
+      redirectUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  // Always return the original `response` to preserve cookies
+  return response;
 }
 
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-}
+};

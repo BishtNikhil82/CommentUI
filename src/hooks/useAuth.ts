@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/client'
 import { User, AuthState } from '@/types'
 
 export function useAuth(): AuthState {
@@ -10,34 +10,24 @@ export function useAuth(): AuthState {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-
-    // Get initial session
-    const getInitialSession = async () => {
+    // Get authenticated user securely
+    const getUser = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const { data: { user }, error } = await supabase.auth.getUser()
+        console.log('useAuth: getUser', { user, error })
         if (error) throw error
-        
-        setUser(session?.user as User || null)
+        setUser(user as User || null)
+        console.log('useAuth: setUser (getUser)', user)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Authentication error')
+        setUser(null)
+        console.log('useAuth: setUser (getUser error)', null)
       } finally {
         setLoading(false)
       }
     }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user as User || null)
-        setLoading(false)
-        setError(null)
-      }
-    )
-
-    return () => subscription.unsubscribe()
+    getUser()
   }, [])
 
   return { user, loading, error }

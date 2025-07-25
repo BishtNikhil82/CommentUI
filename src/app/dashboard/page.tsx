@@ -11,9 +11,11 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { VideoData, StreamingChunk } from '@/types'
 import { toast } from 'sonner'
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from '@/lib/client'
 import { Alert } from '@/components/ui/alert'
 // Removed import { createClient } from '@/lib/supabase/client' because the module does not exist
+
+console.log('DASHBOARD: file loaded');
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
@@ -25,60 +27,61 @@ export default function DashboardPage() {
     totalFound: 0,
     isComplete: false,
   })
+  console.log('DASHBOARD: render', { user, authLoading, searchState });
   // Keep track of the current Supabase channel subscription
   const subscriptionRef = useRef<any>(null)
   const jobIdRef = useRef<string | null>(null)
 
   // --- SUPABASE TEST MODE ---
-  const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID
-  useEffect(() => {
-    console.log('DashboardPage mounted. testJobId:', testJobId, 'user:', user);
-    if (!testJobId) return
-    // Clean up previous subscription if any
-    if (subscriptionRef.current) {
-      console.log('Unsubscribing previous channel');
-      subscriptionRef.current.unsubscribe()
-      subscriptionRef.current = null
-    }
-    setSearchState(prev => ({ ...prev, videos: [], totalFound: 0 }))
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    console.log('Subscribing to job_results for job_id:', testJobId)
-    const channel = supabase
-      .channel('job_results_' + testJobId)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'job_results',
-          filter: `job_id=eq.${testJobId}`,
-        },
-        (payload: any) => {
-          console.log('Received job_results insert:', payload.new)
-          const row = payload.new
-          setSearchState(prev => {
-            if (prev.videos.some(v => v.id === row.video_id)) return prev
-            return {
-              ...prev,
-              videos: [...prev.videos, mapJobResultToVideoData(row)],
-              totalFound: prev.totalFound + 1,
-            }
-          })
-        }
-      )
-      .subscribe()
-    subscriptionRef.current = channel
-    return () => {
-      if (subscriptionRef.current) {
-        console.log('Unsubscribing on cleanup')
-        subscriptionRef.current.unsubscribe()
-        subscriptionRef.current = null
-      }
-    }
-  }, [testJobId, user])
+  // const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID
+  // useEffect(() => {
+  //   console.log('DashboardPage mounted. testJobId:', testJobId, 'user:', user);
+  //   if (!testJobId) return
+  //   // Clean up previous subscription if any
+  //   if (subscriptionRef.current) {
+  //     console.log('Unsubscribing previous channel');
+  //     subscriptionRef.current.unsubscribe()
+  //     subscriptionRef.current = null
+  //   }
+  //   setSearchState(prev => ({ ...prev, videos: [], totalFound: 0 }))
+  //   const supabase = createBrowserClient(
+  //     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  //   )
+  //   console.log('Subscribing to job_results for job_id:', testJobId)
+  //   const channel = supabase
+  //     .channel('job_results_' + testJobId)
+  //     .on(
+  //       'postgres_changes',
+  //       {
+  //         event: 'INSERT',
+  //         schema: 'public',
+  //         table: 'job_results',
+  //         filter: `job_id=eq.${testJobId}`,
+  //       },
+  //       (payload: any) => {
+  //         console.log('Received job_results insert:', payload.new)
+  //         const row = payload.new
+  //         setSearchState(prev => {
+  //           if (prev.videos.some(v => v.id === row.video_id)) return prev
+  //           return {
+  //             ...prev,
+  //             videos: [...prev.videos, mapJobResultToVideoData(row)],
+  //             totalFound: prev.totalFound + 1,
+  //           }
+  //         })
+  //       }
+  //     )
+  //     .subscribe()
+  //   subscriptionRef.current = channel
+  //   return () => {
+  //     if (subscriptionRef.current) {
+  //       console.log('Unsubscribing on cleanup')
+  //       subscriptionRef.current.unsubscribe()
+  //       subscriptionRef.current = null
+  //     }
+  //   }
+  // }, [testJobId, user])
   // --- END SUPABASE TEST MODE ---
 
   // Helper to map job_results row to VideoData
@@ -109,13 +112,17 @@ function mapJobResultToVideoData(row: any): VideoData {
     thumbnail: row.thumbnail_url,
     pros: normalizeToArray(row.pros),
     cons: normalizeToArray(row.cons),
-    nextTopicIdeas: [],
+    nextTopicIdeas:normalizeToArray(row.summary),
+    duration: row.duration,
+    viewCount: row.view_count,
+    uploadDate: row.upload_date,
   };
 }
 
 
   // Clean up subscription on unmount or new search
   useEffect(() => {
+    console.log('DASHBOARD: useEffect cleanup');
     return () => {
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe()
@@ -125,6 +132,7 @@ function mapJobResultToVideoData(row: any): VideoData {
   }, [])
 
   const handleSearch = useCallback(async (query: string) => {
+    console.log('DASHBOARD: handleSearch called', { query, user });
     const isMock = process.env.NEXT_PUBLIC_MOCK_UI === 'true'
     if (isMock) {
       setSearchState(prev => ({
@@ -206,6 +214,7 @@ function mapJobResultToVideoData(row: any): VideoData {
         credentials: 'include',
         body: JSON.stringify({ query }),
       })
+      console.log('DASHBOARD: /api/analytics response', response.status);
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -217,10 +226,6 @@ function mapJobResultToVideoData(row: any): VideoData {
       jobIdRef.current = job_id
 
       // Subscribe to job_results for this job_id
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
       const channel = supabase
         .channel('job_results_' + job_id)
         .on(
@@ -255,7 +260,7 @@ function mapJobResultToVideoData(row: any): VideoData {
       // For now, mark as complete after some time or when enough results
       // You can enhance this with another subscription if needed
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('DASHBOARD: Search error', error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
       setSearchState(prev => ({
         ...prev,
@@ -285,19 +290,21 @@ function mapJobResultToVideoData(row: any): VideoData {
     )
   }
 
-  if (!user && !testJobId) {
+  //if (!user && !testJobId) // testing mode
+  if (!user)
+  {
     return <LoginForm />
   }
-
+  console.log('DASHBOARD: return render', { user, authLoading, searchState });
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-800">
-      {testJobId && (
+      {/* {testJobId && (
         <div className="max-w-2xl mx-auto mt-4">
           <Alert>
             <b>Supabase Test Mode:</b> Subscribed to job_id <code>{testJobId}</code>. Insert rows in Supabase to see realtime UI updates.
           </Alert>
         </div>
-      )}
+      )} */}
       <Header user={user} />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -362,7 +369,7 @@ function mapJobResultToVideoData(row: any): VideoData {
           <div className="space-y-8 mt-12">
             <div className="bg-white/5 backdrop-blur-md rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between border border-white/10">
               <h3 className="text-xl font-semibold text-white mb-2 md:mb-0">
-                Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">&quot{searchState.query}&quot</span>
+                Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{searchState.query}</span>
               </h3>
               <div className="flex items-center space-x-2 bg-white/10 rounded-full px-4 py-1.5 text-purple-200 border border-white/20">
                 <span className="flex items-center">

@@ -2,7 +2,10 @@
 "use client";
 import { SetupWarningButton } from '@/components/auth/SetupWarningButton'
 
+console.log('MAINPAGE: file loaded');
+
 export default function HomePage() {
+  console.log('MAINPAGE: HomePage render');
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-purple-900 to-violet-800 px-4 py-12">
       {/* Hero Section */}

@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "shadcn-ui init"
+    "lint": "next lint"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
@@ -60,7 +59,6 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "toast": "^0.5.4",
-    "uuid": "^11.1.0",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

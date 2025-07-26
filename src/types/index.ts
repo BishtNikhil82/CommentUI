@@ -1,12 +1,9 @@
-export interface User {
+export interface GoogleUser {
   id: string;
   email: string;
-  user_metadata: {
-    avatar_url?: string;
-    full_name?: string;
-    provider_token?: string;
-    provider_refresh_token?: string;
-  };
+  name: string;
+  picture: string;
+  verified_email: boolean;
 }
 
 export interface VideoData {
@@ -34,9 +31,8 @@ export interface StreamingChunk {
 }
 
 export interface AuthState {
-  user: User | null;
+  user: GoogleUser | null;
   loading: boolean;
-  error: string | null;
 }
 
 export interface SearchState {

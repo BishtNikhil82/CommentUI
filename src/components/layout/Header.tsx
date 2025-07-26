@@ -4,12 +4,11 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { signOut } from '@/lib/auth'
-import { User as UserType } from '@/types'
+import { GoogleUser } from '@/lib/google-auth'
 import { toast } from 'sonner'
 
 interface HeaderProps {
-  user: UserType
+  user: GoogleUser
 }
 
 export function Header({ user }: HeaderProps) {
@@ -18,8 +17,8 @@ export function Header({ user }: HeaderProps) {
   const handleSignOut = async () => {
     try {
       setLoading(true)
-      await signOut()
-      toast.success('Signed out successfully')
+      // Redirect to logout route
+      window.location.href = '/auth/logout'
     } catch (error) {
       toast.error('Failed to sign out')
     } finally {
@@ -39,9 +38,9 @@ export function Header({ user }: HeaderProps) {
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-full py-1.5 px-3 border border-white/20">
-              {user?.user_metadata?.avatar_url ? (
+              {user?.picture ? (
                 <Image
-                  src={user.user_metadata.avatar_url}
+                  src={user.picture}
                   alt="Profile"
                   width={32}
                   height={32}
@@ -53,7 +52,7 @@ export function Header({ user }: HeaderProps) {
                 </div>
               )}
               <span className="text-sm font-medium text-white hidden sm:block">
-                {user?.user_metadata?.full_name || user?.email}
+                {user?.name || user?.email}
               </span>
             </div>
             

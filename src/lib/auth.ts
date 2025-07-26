@@ -1,60 +1,7 @@
-import { supabase } from '@/lib/client'
-//import { createSupabaseServerClient } from '@/lib/server'
-import { User } from '@/types'
+// Google OAuth utility functions
+// Note: Most authentication is now handled by the Google OAuth flow in /auth/* routes
 
-export async function signInWithGoogle() {
-  console.error('Nikihl Sign in Oauth with supabase:' )
-  
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      scopes: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl',
-      redirectTo: `${window.location.origin}/auth/callback`,
-      queryParams: {
-        prompt: 'consent',
-        access_type: 'offline', // also required for refresh_token
-      },
-    },
-  })
-
-  if (error) {
-    console.log('Nikihl Sign-in error:', error)
-    throw new Error(error.message)
-  }
-
-  return data
-}
-
-export async function signOut() {
-  console.log('signOut called from src/lib/auth.ts')
-  const { error } = await supabase.auth.signOut()
-  
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
-export async function getProviderToken(): Promise<string | null> {
-  const { data: { session }, error } = await supabase.auth.getSession();
-
-  if (error || !session) {
-    return null;
-  }
-
-  return session.provider_token;
-}
-
-export async function getCurrentUser(): Promise<User | null> {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
-  if (error || !user) {
-    return null
-  }
-
-  return user as User
-}
-
-export async function refreshYouTubeToken(refreshToken: string) {
+export async function refreshYouTubeToken(refreshToken: string): Promise<string> {
   try {
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -62,7 +9,7 @@ export async function refreshYouTubeToken(refreshToken: string) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
         refresh_token: refreshToken,
         grant_type: 'refresh_token',
@@ -80,3 +27,9 @@ export async function refreshYouTubeToken(refreshToken: string) {
     throw error
   }
 }
+
+// Note: The following functions have been replaced by Google OAuth:
+// - signInWithGoogle() -> Now handled by /auth/login route
+// - signOut() -> Now handled by /auth/logout route  
+// - getProviderToken() -> Now handled by session management
+// - getCurrentUser() -> Now handled by /api/auth/me route

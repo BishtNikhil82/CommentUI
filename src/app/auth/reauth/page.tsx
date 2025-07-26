@@ -1,7 +1,6 @@
 // src/app/auth/reauth/page.tsx
 'use client';
 import { useState } from 'react';
-import { signInWithGoogle } from '@/lib/auth';
 
 export default function ReauthPage() {
   const [loading, setLoading] = useState(false);
@@ -11,8 +10,8 @@ export default function ReauthPage() {
     setLoading(true);
     setError(null);
     try {
-      await signInWithGoogle();
-      // Supabase will handle redirect
+      // Redirect to the login route which will handle Google OAuth
+      window.location.href = '/auth/login';
     } catch (err: any) {
       setError(err.message || 'Re-authentication failed');
       setLoading(false);

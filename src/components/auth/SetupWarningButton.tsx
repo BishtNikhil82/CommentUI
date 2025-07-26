@@ -1,6 +1,5 @@
 'use client'
 
-import { signInWithGoogle } from '@/lib/auth'
 import { FaYoutube } from 'react-icons/fa'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { useState } from 'react'
@@ -12,8 +11,8 @@ export function SetupWarningButton() {
     console.log('Button clicked')
     setLoading(true)
     try {
-      await signInWithGoogle()
-      // Supabase will handle redirect, so no further action needed here
+      // Redirect to the login route which will handle Google OAuth
+      window.location.href = '/auth/login'
     } catch (error: any) {
       alert(error.message || 'Google sign-in failed')
       setLoading(false)

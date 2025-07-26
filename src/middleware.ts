@@ -1,5 +1,5 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { validateAndRefreshSession } from '@/lib/session';
 
 console.log('🔐 MIDDLEWARE: loaded');
 
@@ -12,29 +12,10 @@ export async function middleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('X-XSS-Protection', '1; mode=block');
 
-  // Create Supabase client
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookies) => {
-          cookies.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          });
-        }
-      }
-    }
-  );
-
-  // DO NOT REMOVE — this sets up the auth state
-  const { data: { session }, error } = await supabase.auth.getSession();
-
   const pathname = request.nextUrl.pathname;
 
   const isAuthRoute = pathname.startsWith('/auth');
+  const isCallbackRoute = pathname === '/auth/callback';
   const isApiAuthRoute = pathname.startsWith('/api/auth');
   const isPublicRoute =
     pathname === '/' ||
@@ -47,40 +28,39 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // Allow public and API auth routes
-  if (isPublicRoute || isApiAuthRoute) {
+  // Allow public routes, API auth routes, and callback route
+  if (isPublicRoute || isApiAuthRoute || isCallbackRoute) {
     return response;
   }
 
-  // Redirect if protected route and user is not signed in
-  if (isProtectedRoute && !session) {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/auth/login';
-    redirectUrl.searchParams.set('next', pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Redirect logged-in users away from /auth routes
-  if (isAuthRoute && session) {
-    const next = request.nextUrl.searchParams.get('next') || '/dashboard';
-    return NextResponse.redirect(new URL(next, request.url));
-  }
-
-  // Optional: Check for YouTube token if required
-  if (isProtectedRoute && session) {
-    const hasYouTubeToken =
-      (session.provider_token && session.provider_token.includes('ya29')) ||
-      (session.user?.user_metadata?.provider_token?.includes('ya29'));
-
-    if (!hasYouTubeToken) {
+  // Validate session for protected routes
+  if (isProtectedRoute) {
+    const { session, response: sessionResponse } = await validateAndRefreshSession(request);
+    
+    if (!session) {
       const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = '/auth/reauth';
+      redirectUrl.pathname = '/auth/login';
       redirectUrl.searchParams.set('next', pathname);
       return NextResponse.redirect(redirectUrl);
     }
+
+    // If session was refreshed, use the updated response
+    if (sessionResponse) {
+      response = sessionResponse;
+    }
   }
 
-  // Always return the original `response` to preserve cookies
+  // Redirect logged-in users away from /auth routes (except callback)
+  if (isAuthRoute && !isCallbackRoute) {
+    const { session } = await validateAndRefreshSession(request);
+    
+    if (session) {
+      const next = request.nextUrl.searchParams.get('next') || '/dashboard';
+      return NextResponse.redirect(new URL(next, request.url));
+    }
+  }
+
+  // Always return the response to preserve cookies
   return response;
 }
 

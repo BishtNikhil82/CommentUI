@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { ChevronDown, ChevronUp, ExternalLink, ThumbsUp, ThumbsDown, Lightbulb } from 'lucide-react'
+import { FaYoutube } from 'react-icons/fa'
 import { VideoData } from '@/types'
 import { formatViewCount, formatUploadDate, truncateText } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -79,8 +80,11 @@ export function VideoCard({ video, onTopicClick }: VideoCardProps) {
       <DrawerContent className="max-w-lg w-full right-0 left-auto ml-auto rounded-t-2xl md:rounded-l-2xl md:rounded-t-none md:fixed md:inset-y-0 md:right-0 md:w-[400px] bg-white/10 border border-white/20 shadow-2xl">
         <DrawerHeader>
           <DrawerTitle className="text-white">Video Analytics</DrawerTitle>
-          <div className="mt-2 text-purple-200 text-sm font-semibold truncate">{video.channelName}</div>
-          <div className="text-white text-base font-bold mb-2 truncate">{video.title}</div>
+          <div className="mt-2 flex items-center text-red-400 text-sm font-semibold truncate">
+            <FaYoutube className="w-4 h-4 mr-1" />
+            <span>{video.channelName}</span>
+          </div>
+          <div className="text-white text-lg font-extrabold mb-2 truncate">{video.title}</div>
           <DrawerClose asChild>
             <Button variant="ghost" size="sm" className="absolute top-4 right-4 text-white/70 hover:text-white">Close</Button>
           </DrawerClose>

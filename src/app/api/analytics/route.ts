@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Fire async call to Python backend
     const backendUrl = process.env.PYTHON_BACKEND_URL || 'http://localhost:8000';
+    console.log('[PYTHON] Backend URL:', backendUrl);
 
     const url = new URL(`${backendUrl}/analyze-youtube`);
     url.searchParams.set('query', topic);
@@ -64,19 +65,57 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('regionCode', 'IN');
     url.searchParams.set('job_id', jobId);
 
-    console.log('[DEBUG] Calling Python URL:', url.toString());
-
-    fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${youtubeToken}`,
-      },
-    }).then(() => {
-      console.log('[PYTHON] Analysis triggered for job:', jobId);
-    }).catch((err) => {
-      console.error('[PYTHON] Failed to trigger analysis:', err.message);
+    console.log('[PYTHON] Full request URL:', url.toString());
+    console.log('[PYTHON] Request headers:', {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${youtubeToken.slice(0, 10)}...`
     });
+
+    // Make the fetch request with better error handling
+    try {
+      console.log('[PYTHON] Starting fetch request...');
+      
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${youtubeToken}`,
+        },
+        // Add timeout and other options for better reliability
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      });
+
+      console.log('[PYTHON] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[PYTHON] Server responded with error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
+        throw new Error(`Python server error: ${response.status} ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('[PYTHON] Response body:', responseText);
+      console.log('[PYTHON] Analysis triggered successfully for job:', jobId);
+
+    } catch (fetchError) {
+      console.error('[PYTHON] Fetch request failed:', {
+        message: fetchError instanceof Error ? fetchError.message : 'Unknown error',
+        name: fetchError instanceof Error ? fetchError.name : 'Unknown',
+        cause: fetchError instanceof Error ? fetchError.cause : undefined
+      });
+      
+      // Don't fail the entire request, just log the error
+      // The job is already created in the database
+    }
 
     // 7. Return job ID
     return NextResponse.json({ job_id: jobId }, { status: 202 });

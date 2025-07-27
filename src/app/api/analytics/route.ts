@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import supabase from '@/lib/supabaseClient';
-
+export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
   try {
     // 1. Get session from cookies
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('order', 'relevance');
     url.searchParams.set('regionCode', 'IN');
     url.searchParams.set('job_id', jobId);
-    
+
     console.log('[DEBUG] Calling Python URL:', url.toString());
 
     fetch(url.toString(), {

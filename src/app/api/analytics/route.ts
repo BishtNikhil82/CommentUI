@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('order', 'relevance');
     url.searchParams.set('regionCode', 'IN');
     url.searchParams.set('job_id', jobId);
+    
+    console.log('[DEBUG] Calling Python URL:', url.toString());
 
     fetch(url.toString(), {
       method: 'GET',

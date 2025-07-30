@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = pathname.startsWith('/auth');
   const isCallbackRoute = pathname === '/auth/callback';
+  const isLogoutRoute = pathname === '/auth/logout';
   const isApiAuthRoute = pathname.startsWith('/api/auth');
   const isPublicRoute =
     pathname === '/' ||
@@ -28,8 +29,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // Allow public routes, API auth routes, and callback route
-  if (isPublicRoute || isApiAuthRoute || isCallbackRoute) {
+  // Allow public routes, API auth routes, callback route, and logout route
+  if (isPublicRoute || isApiAuthRoute || isCallbackRoute || isLogoutRoute) {
     return response;
   }
 
@@ -50,8 +51,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect logged-in users away from /auth routes (except callback)
-  if (isAuthRoute && !isCallbackRoute) {
+  // Redirect logged-in users away from /auth routes (except callback and logout)
+  if (isAuthRoute && !isCallbackRoute && !isLogoutRoute) {
     const { session } = await validateAndRefreshSession(request);
     
     if (session) {

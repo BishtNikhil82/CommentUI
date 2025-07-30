@@ -41,7 +41,7 @@ export default function HomePage() {
       setCurrentWord((prev) => (prev + 1) % words.length);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [words.length]);
 
   const features = [
     {
@@ -488,7 +488,7 @@ export default function HomePage() {
                     <p className="text-gray-400 text-sm">{testimonial.role}</p>
                   </div>
                 </div>
-                <p className="text-gray-300 leading-relaxed mb-4">"{testimonial.content}"</p>
+                <p className="text-gray-300 leading-relaxed mb-4">&ldquo;{testimonial.content}&rdquo;</p>
                 <div className="flex items-center space-x-1">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />

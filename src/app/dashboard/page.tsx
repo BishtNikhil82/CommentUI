@@ -13,7 +13,8 @@ import { VideoData, StreamingChunk, GoogleUser } from '@/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/client'
 import { Alert } from '@/components/ui/alert'
-// Removed import { createClient } from '@/lib/supabase/client' because the module does not exist
+import { motion } from 'framer-motion'
+import { Search, TrendingUp, BarChart3, Sparkles, MessageSquare, Brain, Target, Activity, Heart, Users, Zap, Play, Star, ArrowRight, CheckCircle } from 'lucide-react'
 
 console.log('DASHBOARD: file loaded');
 
@@ -32,93 +33,40 @@ export default function DashboardPage() {
   const subscriptionRef = useRef<any>(null)
   const jobIdRef = useRef<string | null>(null)
 
-  // --- SUPABASE TEST MODE ---
-  // const testJobId = process.env.NEXT_PUBLIC_SUPABASE_TEST_JOB_ID
-  // useEffect(() => {
-  //   console.log('DashboardPage mounted. testJobId:', testJobId, 'user:', user);
-  //   if (!testJobId) return
-  //   // Clean up previous subscription if any
-  //   if (subscriptionRef.current) {
-  //     console.log('Unsubscribing previous channel');
-  //     subscriptionRef.current.unsubscribe()
-  //     subscriptionRef.current = null
-  //   }
-  //   setSearchState(prev => ({ ...prev, videos: [], totalFound: 0 }))
-  //   const supabase = createBrowserClient(
-  //     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  //   )
-  //   console.log('Subscribing to job_results for job_id:', testJobId)
-  //   const channel = supabase
-  //     .channel('job_results_' + testJobId)
-  //     .on(
-  //       'postgres_changes',
-  //       {
-  //         event: 'INSERT',
-  //         schema: 'public',
-  //         table: 'job_results',
-  //         filter: `job_id=eq.${testJobId}`,
-  //       },
-  //       (payload: any) => {
-  //         console.log('Received job_results insert:', payload.new)
-  //         const row = payload.new
-  //         setSearchState(prev => {
-  //           if (prev.videos.some(v => v.id === row.video_id)) return prev
-  //           return {
-  //             ...prev,
-  //             videos: [...prev.videos, mapJobResultToVideoData(row)],
-  //             totalFound: prev.totalFound + 1,
-  //           }
-  //         })
-  //       }
-  //     )
-  //     .subscribe()
-  //   subscriptionRef.current = channel
-  //   return () => {
-  //     if (subscriptionRef.current) {
-  //       console.log('Unsubscribing on cleanup')
-  //       subscriptionRef.current.unsubscribe()
-  //       subscriptionRef.current = null
-  //     }
-  //   }
-  // }, [testJobId, user])
-  // --- END SUPABASE TEST MODE ---
-
   // Helper to map job_results row to VideoData
-function mapJobResultToVideoData(row: any): VideoData {
-  const normalizeToArray = (value: any): string[] => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === 'string') {
-      return value.trim().startsWith('[')
-        ? safeParseArray(value) // try parsing as JSON array
-        : [value]; // just a plain string
-    }
-    return [];
-  };
+  function mapJobResultToVideoData(row: any): VideoData {
+    const normalizeToArray = (value: any): string[] => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === 'string') {
+        return value.trim().startsWith('[')
+          ? safeParseArray(value) // try parsing as JSON array
+          : [value]; // just a plain string
+      }
+      return [];
+    };
 
-  const safeParseArray = (value: string): string[] => {
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [value];
-    } catch {
-      return [value]; // fallback: wrap raw string
-    }
-  };
+    const safeParseArray = (value: string): string[] => {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [value];
+      } catch {
+        return [value]; // fallback: wrap raw string
+      }
+    };
 
-  return {
-    id: row.video_id,
-    title: row.video_title,
-    channelName: row.channel_title,
-    thumbnail: row.thumbnail_url,
-    pros: normalizeToArray(row.pros),
-    cons: normalizeToArray(row.cons),
-    nextTopicIdeas:normalizeToArray(row.summary),
-    duration: row.duration,
-    viewCount: row.view_count,
-    uploadDate: row.upload_date,
-  };
-}
-
+    return {
+      id: row.video_id,
+      title: row.video_title,
+      channelName: row.channel_title,
+      thumbnail: row.thumbnail_url,
+      pros: normalizeToArray(row.pros),
+      cons: normalizeToArray(row.cons),
+      nextTopicIdeas:normalizeToArray(row.summary),
+      duration: row.duration,
+      viewCount: row.view_count,
+      uploadDate: row.upload_date,
+    };
+  }
 
   // Clean up subscription on unmount or new search
   useEffect(() => {
@@ -284,67 +232,122 @@ function mapJobResultToVideoData(row: any): VideoData {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-blue-950 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="text-white mt-4">Loading your dashboard...</p>
+        </div>
       </div>
     )
   }
 
-  //if (!user && !testJobId) // testing mode
-  if (!user)
-  {
+  if (!user) {
     return <LoginForm />
   }
+
   console.log('DASHBOARD: return render', { user, authLoading, searchState });
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-800">
-      {/* {testJobId && (
-        <div className="max-w-2xl mx-auto mt-4">
-          <Alert>
-            <b>Supabase Test Mode:</b> Subscribed to job_id <code>{testJobId}</code>. Insert rows in Supabase to see realtime UI updates.
-          </Alert>
-        </div>
-      )} */}
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-blue-950 relative overflow-hidden">
+      {/* Animated Sparkles Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(30)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-blue-400 rounded-full opacity-40"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              opacity: [0.1, 0.6, 0.1],
+              scale: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 3,
+            }}
+          />
+        ))}
+      </div>
+
       <Header user={user} />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-12">
-          <div className="inline-block px-3 py-1 rounded-full bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 text-purple-200 text-sm font-medium mb-4">
-            Powerful Analytics
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-            Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">YouTube</span> Content Insights
-          </h2>
-          <p className="text-xl text-purple-100/80 mb-10 max-w-2xl mx-auto">
-            Search for any topic and get detailed analysis of relevant YouTube videos
-          </p>
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-blue-500/20 mb-6"
+          >
+            <Sparkles className="w-4 h-4 text-blue-400" />
+            <span className="text-sm text-gray-300 font-medium">AI-Powered Comment Analytics</span>
+          </motion.div>
           
-          <div className="max-w-2xl mx-auto bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl md:text-5xl font-bold text-white mb-4"
+          >
+            Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">YouTube</span> Content Insights
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed mb-8"
+          >
+            Search for any topic and get detailed analysis of relevant YouTube videos with AI-powered insights
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="max-w-3xl mx-auto bg-white/5 backdrop-blur-md rounded-2xl p-8 border border-blue-500/20 shadow-xl"
+          >
             <SearchBar
               onSearch={handleSearch}
               loading={searchState.loading}
             />
             
-            <div className="mt-4">
+            <div className="mt-6">
               <SearchHistory onSearch={handleSearch} />
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Loading state */}
         {searchState.loading && (
-          <div className="mt-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-12"
+          >
             <ProgressIndicator
               message="Analyzing videos..."
               count={searchState.totalFound}
             />
-          </div>
+          </motion.div>
         )}
 
         {/* Error state */}
         {searchState.error && (
-          <div className="text-center py-12">
-            <div className="bg-white/5 backdrop-blur-md border border-red-500/30 rounded-xl p-6 max-w-md mx-auto shadow-lg">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-12"
+          >
+            <div className="bg-white/5 backdrop-blur-md border border-red-500/30 rounded-xl p-8 max-w-md mx-auto shadow-lg">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
                 <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -354,36 +357,47 @@ function mapJobResultToVideoData(row: any): VideoData {
                 Search Error
               </h3>
               <p className="text-red-300 mb-6">{searchState.error}</p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleSearch(searchState.query)}
-                className="bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-2 rounded-xl hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-lg"
+                className="bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-3 rounded-xl hover:from-red-500 hover:to-red-400 transition-all duration-300 shadow-lg"
               >
                 Try Again
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Results */}
         {searchState.videos.length > 0 && (
-          <div className="space-y-8 mt-12">
-            <div className="bg-white/5 backdrop-blur-md rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between border border-white/10">
-              <h3 className="text-xl font-semibold text-white mb-2 md:mb-0">
-                Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{searchState.query}</span>
-              </h3>
-              <div className="flex items-center space-x-2 bg-white/10 rounded-full px-4 py-1.5 text-purple-200 border border-white/20">
-                <span className="flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8 mt-12"
+          >
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between border border-blue-500/20 shadow-lg">
+              <div className="flex items-center space-x-3 mb-4 md:mb-0">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">
+                    Analysis Results for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{searchState.query}</span>
+                  </h3>
+                  <p className="text-gray-400 text-sm">AI-powered insights and recommendations</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3 bg-white/10 rounded-full px-4 py-2 text-purple-200 border border-blue-500/20">
+                <TrendingUp className="w-4 h-4" />
+                <span className="font-medium">
                   {searchState.totalFound} video{searchState.totalFound !== 1 ? 's' : ''}
                 </span>
                 {!searchState.isComplete && (
-                  <span className="flex items-center">
-                    <LoadingSpinner size="sm" className="mr-1" />
-                    loading more...
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <LoadingSpinner size="sm" />
+                    <span className="text-sm">loading more...</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -392,26 +406,28 @@ function mapJobResultToVideoData(row: any): VideoData {
               videos={searchState.videos}
               onTopicClick={handleTopicClick}
             />
-          </div>
+          </motion.div>
         )}
 
         {/* Empty state */}
         {!searchState.loading && searchState.videos.length === 0 && !searchState.error && (
-          <div className="text-center py-16">
-            <div className="max-w-md mx-auto bg-white/5 backdrop-blur-md rounded-xl p-8 border border-white/10 shadow-lg">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="max-w-md mx-auto bg-white/5 backdrop-blur-md rounded-xl p-8 border border-blue-500/20 shadow-lg">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Search className="w-8 h-8 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 Ready to analyze YouTube content?
               </h3>
-              <p className="text-purple-200/80">
-                Enter a topic above to discover insights from relevant YouTube videos.
+              <p className="text-gray-300 leading-relaxed">
+                Enter a topic above to discover insights from relevant YouTube videos and get AI-powered recommendations.
               </p>
             </div>
-          </div>
+          </motion.div>
         )}
       </main>
     </div>

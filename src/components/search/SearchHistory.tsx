@@ -5,7 +5,7 @@ import { Clock, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface SearchHistoryProps {
-  onSearch: (query: string) => void
+  onSearch: (query: string, region?: string) => void
 }
 
 export function SearchHistory({ onSearch }: SearchHistoryProps) {

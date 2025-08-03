@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import supabase from '@/lib/supabaseClient';
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     // 1. Get session from cookies
@@ -20,10 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Parse and validate body
-    const { query: topic } = await request.json();
+    const { query: topic, region = 'IN' } = await request.json();
 
     if (!topic || typeof topic !== 'string') {
       return NextResponse.json({ error: 'Query must be a non-empty string.' }, { status: 400 });
+    }
+
+    if (region && typeof region !== 'string') {
+      return NextResponse.json({ error: 'Region must be a string.' }, { status: 400 });
     }
 
     // 3. Get user profile ID from session
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
     url.searchParams.set('query', topic);
     url.searchParams.set('maxResults', '5');
     url.searchParams.set('order', 'relevance');
-    url.searchParams.set('regionCode', 'IN');
+    url.searchParams.set('regionCode', region);
     url.searchParams.set('job_id', jobId);
 
     console.log('[PYTHON] Full request URL:', url.toString());

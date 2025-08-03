@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 interface SearchBarProps {
-  onSearch: (query: string) => void
+  onSearch: (query: string, region?: string) => void
   loading?: boolean
   placeholder?: string
 }
@@ -20,18 +20,45 @@ export function SearchBar({
   placeholder = "Search for YouTube topic analysis..." 
 }: SearchBarProps) {
   const [query, setQuery] = useState('')
-  console.log('SEARCHBAR: render', { query, loading });
+  const [selectedRegion, setSelectedRegion] = useState('IN')
+  const [regions, setRegions] = useState<Array<{code: string, name: string}>>([])
+  const [loadingRegions, setLoadingRegions] = useState(false)
+  console.log('SEARCHBAR: render', { query, loading, selectedRegion });
+
+  // Fetch regions on component mount
+  useEffect(() => {
+    const fetchRegions = async () => {
+      setLoadingRegions(true)
+      try {
+        const response = await fetch('/api/regions', {
+          credentials: 'include',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setRegions(data.regions || [])
+        } else {
+          console.error('Failed to fetch regions')
+        }
+      } catch (error) {
+        console.error('Error fetching regions:', error)
+      } finally {
+        setLoadingRegions(false)
+      }
+    }
+
+    fetchRegions()
+  }, [])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    console.log('SEARCHBAR: handleSubmit', { query, loading });
+    console.log('SEARCHBAR: handleSubmit', { query, loading, selectedRegion });
     if (query.trim() && !loading) {
-      onSearch(query.trim())
+      onSearch(query.trim(), selectedRegion)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
+    <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto space-y-4">
       <div className="flex items-center overflow-hidden rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:border-purple-400/30 transition-all duration-300 focus-within:border-purple-400/50 focus-within:ring-2 focus-within:ring-purple-400/20">
         <div className="relative flex-1">
           <Input
@@ -58,6 +85,30 @@ export function SearchBar({
             'Search'
           )}
         </Button>
+      </div>
+      
+      {/* Region Selector */}
+      <div className="flex items-center space-x-3">
+        <label className="text-sm text-gray-300 font-medium">Region:</label>
+        <select
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+          disabled={loadingRegions || loading}
+          className="px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white text-sm focus:border-purple-400/50 focus:ring-2 focus:ring-purple-400/20 focus:outline-none transition-all duration-300 disabled:opacity-50"
+        >
+          {loadingRegions ? (
+            <option value="">Loading regions...</option>
+          ) : (
+            regions.map((region) => (
+              <option key={region.code} value={region.code} className="bg-gray-800 text-white">
+                {region.name}
+              </option>
+            ))
+          )}
+        </select>
+        {loadingRegions && (
+          <LoadingSpinner size="sm" className="border-t-purple-400" />
+        )}
       </div>
     </form>
   )

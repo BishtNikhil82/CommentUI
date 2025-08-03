@@ -79,7 +79,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  const handleSearch = useCallback(async (query: string) => {
+  const handleSearch = useCallback(async (query: string, region?: string) => {
     console.log('DASHBOARD: handleSearch called', { query, user });
     const isMock = process.env.NEXT_PUBLIC_MOCK_UI === 'true'
     if (isMock) {
@@ -160,7 +160,7 @@ export default function DashboardPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, region }),
       })
       console.log('DASHBOARD: /api/analytics response', response.status);
 
